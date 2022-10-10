@@ -1,0 +1,136 @@
+clc
+clear all;
+
+fs=8000;    %sampling frequency is 8000Hz
+ts=1/fs;    %sampling period is 1/fs
+d=0.3;      %duration is 0.3 second
+t=0:ts:d;   %time interval
+
+%Keypad=['1','2','3','A','4','5','6','B','7','8','9','C','*','0','#','D'];
+
+key=input('Input the Keypad Number: ','s');
+
+%this part we encode our array to frequency 
+%First low frequencies of rows encodded
+switch(key) 
+    case {'1','2','3','A'}
+        f1=697;
+    case {'4','5','6','B'}
+        f1=770;
+    case {'7','8','9','C'}
+        f1=852;
+    case {'*','0','#','D'}
+        f1=941;
+    otherwise 
+        disp('Error!');
+        return
+end
+%Then higher frequency variables encodded as columns
+switch(key)
+    case{'1','4','7','*'}
+        f2=1209;
+    case {'2','5','8','0'}
+        f2=1336;
+    case {'3','6','9','#'}
+        f2=1477;
+    case {'A','B','C','D'}
+        f2=1633;
+    otherwise
+        disp('Error!');
+end
+
+xl=sin(2*pi*f1.*t); %low frequency component of x
+xh=sin(2*pi*f2.*t); %high frequency component of x
+x=xl+xh;            %sum of these two components as x signal in time domain
+y1=abs(fft(xl));    %absolute value fft of lower component of x
+y2=abs(fft(xh));    %absolute value fft of higher component of x
+y=abs(fft(x));      %absolute value fft of x sum
+n = length(y);      %length of signal
+yy2 = fftshift(y2); %frequency domain shift to make zero value as origin
+yy1 = fftshift(y1); %frequency domain shift to make zero value as origin
+yy=fftshift(y);     %frequency domain shift to make zero value as origin
+fshift = (-n/2:n/2-1)*(fs/n); % zero-centered frequency range
+
+%sound code of x and sampling rate of the sound
+sound(x,fs);
+
+subplot(311)
+plot(xl(1,1:400));
+title(['X-low of the "',key,'"'])
+xlabel('Time');ylabel('Amplitude');
+subplot(312)
+plot(xh(1,1:400));
+title(['X-high of the "',key,'"'])
+xlabel('Time');ylabel('Amplitude');
+subplot(313)
+plot(x(1,1:400));
+title(['X-sum & DTMF Signal of the "',key,'"'])
+xlabel('Time');ylabel('Amplitude');
+pause
+
+subplot(311)
+stem(fshift,yy2);
+title(['FFT of X-high of the "',key,'"'])
+xlabel('Frequency');ylabel('Amplitude');
+subplot(312)
+stem(fshift,yy1);
+title(['FFT of X-low of the "',key,'"'])
+xlabel('Frequency');ylabel('Amplitude');
+subplot(313)
+stem(fshift,yy);
+title(['FFT of both X-sum & DTMF Signal of the "',key,'"'])
+xlabel('Frequency');ylabel('Amplitude');
+pause
+
+
+%___________________decode_____________________
+
+switch(f1)
+   case{697}
+        switch(f2)
+           case{1209}
+               taste='1';
+           case{1336}
+               taste='2';
+           case{1477}
+               taste='3';
+           case{1633}
+               taste='A';
+        end
+           
+    case{770}
+        switch(f2)
+            case{1209}
+                taste='4';
+            case{1336}
+                taste='5';
+            case{1477}
+                taste='6';
+            case{1633}
+                taste='B';
+        end
+    case{852}
+        switch(f2)
+            case{1209}
+                taste='7';
+            case{1336}
+                taste='8';
+            case{1477}
+                taste='9';
+            case{1633}
+                taste='C';
+        end
+    case{941}
+        switch(f2)
+            case{1209}
+                taste='*';
+            case{1336}
+                taste='0';
+            case{1477}
+                taste='#';
+            case{1633}
+                taste='D';
+        end
+end
+
+fprintf('Decoded key is: ');disp(taste);
